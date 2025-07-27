@@ -1,14 +1,27 @@
 FROM --platform=linux/amd64 public.ecr.aws/lambda/python:3.13
 
-# 作業ディレクトリの作成
+USER root
+
 WORKDIR ${LAMBDA_TASK_ROOT}
 
-# 基本的な依存関係とmarkitdownをインストール
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install markitdown[all]
+RUN dnf update -y && \
+    dnf clean all && \
+    rm -rf /var/cache/dnf
 
-# Lambda関数のコードをコピー
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir markitdown[all] && \
+    pip list --format=freeze > /requirements.txt
+
 COPY lambda_function.py lambda_function.py
 
-# Lambda関数のハンドラーを指定
+RUN chmod 644 lambda_function.py && \
+    chmod 644 /requirements.txt
+
+RUN mkdir -p /tmp/markitdown && \
+    chmod 700 /tmp/markitdown
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV TMPDIR=/tmp/markitdown
+
 CMD ["lambda_function.lambda_handler"]

@@ -36,6 +36,13 @@ export class MarkitdownWebStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(30),
       memorySize: 1024,
       architecture: lambda.Architecture.X86_64,
+      environment: {
+        'TZ': 'UTC',
+        'TMPDIR': '/tmp/markitdown',
+        'PYTHONDONTWRITEBYTECODE': '1',
+        'PYTHONUNBUFFERED': '1'
+      },
+      reservedConcurrentExecutions: 100,
     });
 
     const api = new apigateway.RestApi(this, 'MarkitdownApi', {
@@ -43,20 +50,57 @@ export class MarkitdownWebStack extends cdk.Stack {
       description: 'API for converting files to markdown',
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
-        allowMethods: apigateway.Cors.ALL_METHODS,
+        allowMethods: ['POST', 'OPTIONS'],
+        allowHeaders: ['Content-Type', 'X-Amz-Date', 'Authorization', 'X-Api-Key'],
+        maxAge: cdk.Duration.hours(1),
       },
       deployOptions: {
         stageName: 'api',
+        loggingLevel: apigateway.MethodLoggingLevel.ERROR,
+        dataTraceEnabled: false,  // Disable logging of sensitive data
+        metricsEnabled: true
       },
+      endpointConfiguration: {
+        types: [apigateway.EndpointType.REGIONAL]
+      }
     });
 
     const convertResource = api.root.addResource('convert');
 
-    // POST: /convert
-    convertResource.addMethod(
+    // POST: /convert 
+    const convertMethod = convertResource.addMethod(
       'POST',
-      new apigateway.LambdaIntegration(markitdownFunction),
+      new apigateway.LambdaIntegration(markitdownFunction, {
+        timeout: cdk.Duration.seconds(29),  // Timeout for Lambda integration
+      }),
+      {
+        requestParameters: {
+          'method.request.header.Content-Type': true
+        },
+        requestValidatorOptions: {
+          requestValidatorName: 'validate-request-body',
+          validateRequestBody: true,
+          validateRequestParameters: true,
+        }
+      }
     );
+
+    // rate limiting
+    new apigateway.UsagePlan(this, 'MarkitdownUsagePlan', {
+      name: 'MarkitdownUsagePlan',
+      throttle: {
+        rateLimit: 100,    // 100 requests/second
+        burstLimit: 200    // 200 requests burst
+      },
+      quota: {
+        limit: 10000,      // 10,000 requests per day
+        period: apigateway.Period.DAY
+      },
+      apiStages: [{
+        api: api,
+        stage: api.deploymentStage
+      }]
+    });
 
     // WAF Web ACL for API Gateway (if IP addresses are specified)
     let apiGatewayWebAcl: wafv2.CfnWebACL | undefined;
@@ -99,6 +143,26 @@ export class MarkitdownWebStack extends cdk.Stack {
       });
     }
 
+    // Security headers function
+    const securityHeadersFunction = new cloudfront.Function(this, 'SecurityHeadersFunction', {
+      functionName: 'markitdown-security-headers',
+      code: cloudfront.FunctionCode.fromInline(`
+        function handler(event) {
+          var response = event.response;
+          var headers = response.headers;
+          
+          headers['strict-transport-security'] = { value: 'max-age=31536000; includeSubdomains; preload' };
+          headers['content-type-options'] = { value: 'nosniff' };
+          headers['frame-options'] = { value: 'DENY' };
+          headers['xss-protection'] = { value: '1; mode=block' };
+          headers['referrer-policy'] = { value: 'strict-origin-when-cross-origin' };
+          headers['permissions-policy'] = { value: 'camera=(), microphone=(), geolocation=()' };
+          
+          return response;
+        }
+      `)
+    });
+
     // CloudFront Distribution
     const distribution = new cloudfront.Distribution(this, 'WebsiteDistribution', {
       webAclId: props?.wafStack?.webAclArn,
@@ -108,6 +172,31 @@ export class MarkitdownWebStack extends cdk.Stack {
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
         cachedMethods: cloudfront.CachedMethods.CACHE_GET_HEAD,
+        compress: true,
+        functionAssociations: [
+          {
+            function: securityHeadersFunction,
+            eventType: cloudfront.FunctionEventType.VIEWER_RESPONSE
+          }
+        ],
+        responseHeadersPolicy: new cloudfront.ResponseHeadersPolicy(this, 'SecurityHeaders', {
+          responseHeadersPolicyName: 'MarkitdownSecurityHeaders',
+          securityHeadersBehavior: {
+            contentTypeOptions: { override: true },
+            frameOptions: { frameOption: cloudfront.HeadersFrameOption.DENY, override: true },
+            referrerPolicy: { referrerPolicy: cloudfront.HeadersReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN, override: true },
+            strictTransportSecurity: { 
+              accessControlMaxAge: cdk.Duration.seconds(31536000), 
+              includeSubdomains: true, 
+              preload: true,
+              override: true 
+            },
+            contentSecurityPolicy: { 
+              contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.amazonaws.com https://*.execute-api.*.amazonaws.com", 
+              override: true 
+            }
+          }
+        })
       },
       defaultRootObject: 'index.html',
       errorResponses: [
@@ -115,7 +204,14 @@ export class MarkitdownWebStack extends cdk.Stack {
           httpStatus: 404,
           responseHttpStatus: 200,
           responsePagePath: '/index.html',
+          ttl: cdk.Duration.minutes(5)
         },
+        {
+          httpStatus: 403,
+          responseHttpStatus: 200,
+          responsePagePath: '/index.html',
+          ttl: cdk.Duration.minutes(5)
+        }
       ],
     });
 

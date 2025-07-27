@@ -63,6 +63,10 @@
   color: #333;
 }
 
+.size-limit {
+  font-size: 0.9rem !important;
+}
+
 .supported-formats {
   font-size: 0.9rem !important;
   color: #666 !important;

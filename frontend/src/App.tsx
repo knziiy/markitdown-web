@@ -14,11 +14,31 @@ function App() {
   const [result, setResult] = useState<ConversionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // 環境変数からAPI URLを取得
   const getApiUrl = () => {
     const baseUrl = process.env.REACT_APP_API_ENDPOINT || '/maibe-failed-to-build';
-    // 末尾のスラッシュを削除
     return baseUrl.replace(/\/$/, '');
+  };
+
+  const checkFileSize = (file: File): boolean => {
+    const estimatedBase64Size = file.size * 1.37; // Base64は約37%増加
+    const maxSizeInBytes = 6 * 1024 * 1024; // 6MB
+    
+    if (estimatedBase64Size > maxSizeInBytes) {
+      setError(`ファイルサイズが大きすぎます。推定Base64サイズ: ${(estimatedBase64Size / (1024 * 1024)).toFixed(2)}MB（上限: 6MB）`);
+      return false;
+    }
+    return true;
+  };
+
+  const checkBase64Size = (base64Data: string): boolean => {
+    const base64SizeInBytes = base64Data.length * 0.75; // Base64は約4/3倍になるので、元のサイズを概算
+    const maxSizeInBytes = 6 * 1024 * 1024; // 6MB
+    
+    if (base64SizeInBytes > maxSizeInBytes) {
+      setError(`ファイルサイズが大きすぎます。Base64エンコード後のサイズが6MBを超えています。現在のサイズ: ${(base64SizeInBytes / (1024 * 1024)).toFixed(2)}MB`);
+      return false;
+    }
+    return true;
   };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -36,14 +56,22 @@ function App() {
     setIsDragOver(false);
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
-      handleFile(files[0]);
+      const file = files[0];
+      
+      if (checkFileSize(file)) {
+        handleFile(file);
+      }
     }
   }, []);
 
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      handleFile(files[0]);
+      const file = files[0];
+      
+      if (checkFileSize(file)) {
+        handleFile(file);
+      }
     }
   }, []);
 
@@ -53,10 +81,14 @@ function App() {
     setResult(null);
 
     try {
-      // ファイルをBase64に変換
       const fileData = await fileToBase64(file);
       
-      // API呼び出し
+      const base64Data = fileData.split(',')[1]; // data:xxxの部分を除去
+      
+      if (!checkBase64Size(base64Data)) {
+        return;
+      }
+      
       const apiUrl = getApiUrl();
       const response = await fetch(`${apiUrl}/convert`, {
         method: 'POST',
@@ -64,7 +96,7 @@ function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          fileData: fileData.split(',')[1], // data:xxxの部分を除去
+          fileData: base64Data,
           fileName: file.name
         })
       });
@@ -133,6 +165,9 @@ function App() {
               <p>ファイルをここにドロップまたはクリック</p>
               <p className="supported-formats">
                 サポート形式: Word (.docx, .doc), Excel (.xlsx, .xls), PowerPoint (.pptx, .ppt), PDF (.pdf), テキスト (.txt, .md)
+              </p>
+              <p className="size-limit">
+                ファイルサイズ上限: 約5MB
               </p>
             </>
           )}

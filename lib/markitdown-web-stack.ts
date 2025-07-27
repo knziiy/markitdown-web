@@ -232,7 +232,7 @@ export class MarkitdownWebStack extends cdk.Stack {
       outputSourceDirectory: 'build',
       buildCommands: ['npm ci', 'npm run build'],
       buildEnvironment: {
-        REACT_APP_API_ENDPOINT: api.url,
+        VITE_REACT_APP_API_ENDPOINT: api.url,
       },
     });
 

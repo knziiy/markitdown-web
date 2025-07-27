@@ -104,7 +104,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 400,
                 'headers': headers,
-                'body': json.dumps({'error': f'Invalid base64 data: {str(e)}'})
+                'body': json.dumps({'error': f'Invalid base64 data'})
             }
         
         if not validate_file_size(file_content):
@@ -149,7 +149,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
         
     except Exception as e:
-        print(f"Unexpected error: {str(e)}")
+        # print(f"Unexpected error: {str(e)}")
         return {
             'statusCode': 500,
             'headers': {

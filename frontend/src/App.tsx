@@ -15,7 +15,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   const getApiUrl = () => {
-    const baseUrl = process.env.REACT_APP_API_ENDPOINT || '/maibe-failed-to-build';
+    const baseUrl = import.meta.env.VITE_REACT_APP_API_ENDPOINT || '/maibe-failed-to-build';
     return baseUrl.replace(/\/$/, '');
   };
 
@@ -132,7 +132,6 @@ function App() {
     if (result?.markdown) {
       try {
         await navigator.clipboard.writeText(result.markdown);
-        alert('マークダウンをクリップボードにコピーしました！');
       } catch (err) {
         alert('クリップボードへのコピーに失敗しました');
       }
@@ -143,7 +142,6 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>MarkItDown Web Service</h1>
-        <p>ファイルをドラッグ&ドロップするか、クリックしてファイルを選択してください</p>
       </header>
 
       <main className="App-main">

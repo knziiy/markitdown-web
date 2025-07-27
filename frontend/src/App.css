@@ -1,0 +1,200 @@
+.App {
+  text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.App-header {
+  background-color: #282c34;
+  padding: 20px;
+  color: white;
+}
+
+.App-header h1 {
+  margin: 0 0 10px 0;
+  font-size: 2.5rem;
+}
+
+.App-header p {
+  margin: 0;
+  font-size: 1.1rem;
+  opacity: 0.8;
+}
+
+.App-main {
+  flex: 1;
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.file-drop-area {
+  border: 3px dashed #ccc;
+  border-radius: 12px;
+  padding: 60px 20px;
+  margin: 20px 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #fafafa;
+}
+
+.file-drop-area:hover {
+  border-color: #61dafb;
+  background-color: #f0f8ff;
+}
+
+.file-drop-area.drag-over {
+  border-color: #61dafb;
+  background-color: #e6f7ff;
+  transform: scale(1.02);
+}
+
+.upload-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+.file-drop-area p {
+  margin: 10px 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.supported-formats {
+  font-size: 0.9rem !important;
+  color: #666 !important;
+  margin-top: 15px !important;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #61dafb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  background-color: #ffe6e6;
+  border: 1px solid #ff9999;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  color: #cc0000;
+}
+
+.error-message h3 {
+  margin: 0 0 10px 0;
+  color: #cc0000;
+}
+
+.result-area {
+  margin: 30px 0;
+  text-align: left;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.result-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.copy-button {
+  background-color: #61dafb;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
+
+.copy-button:hover {
+  background-color: #21a9d1;
+}
+
+.markdown-output {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.markdown-output pre {
+  margin: 0;
+  padding: 20px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #333;
+}
+
+.App-footer {
+  background-color: #282c34;
+  padding: 20px;
+  color: white;
+  margin-top: auto;
+}
+
+.App-footer p {
+  margin: 0;
+  opacity: 0.7;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+  .App-header h1 {
+    font-size: 2rem;
+  }
+  
+  .App-main {
+    padding: 20px 15px;
+  }
+  
+  .file-drop-area {
+    padding: 40px 15px;
+  }
+  
+  .upload-icon {
+    font-size: 3rem;
+  }
+  
+  .result-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+  
+  .copy-button {
+    width: 100%;
+  }
+}

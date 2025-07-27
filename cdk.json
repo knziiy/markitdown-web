@@ -1,0 +1,40 @@
+{
+  "app": "npx ts-node --prefer-ts-exts bin/markitdown-web-service.ts",
+  "watch": {
+    "include": [
+      "**"
+    ],
+    "exclude": [
+      "README.md",
+      "cdk*.json",
+      "**/*.d.ts",
+      "**/*.js",
+      "tsconfig.json",
+      "package*.json",
+      "yarn.lock",
+      "node_modules",
+      "test"
+    ]
+  },
+  "context": {
+    "allowedIpAddresses": [],
+    "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
+    "@aws-cdk/core:checkSecretUsage": true,
+    "@aws-cdk/core:target": "aws-cdk-lib@2.87.0",
+    "@aws-cdk-lib/aws-s3:createDefaultLoggingPolicy": true,
+    "@aws-cdk-lib/aws-sns-subscriptions:restrictSqsDescryption": true,
+    "@aws-cdk-lib/aws-apigateway:disableCloudWatchRole": true,
+    "@aws-cdk-lib/core:enablePartitionLiterals": true,
+    "@aws-cdk-lib/core:enableStackNameDuplicates": true,
+    "aws-cdk:enableDiffNoFail": true,
+    "@aws-cdk-lib/core:stackRelativeExports": true,
+    "@aws-cdk-lib/aws-rds:lowercaseDbIdentifier": true,
+    "@aws-cdk-lib/aws-lambda:recognizeVersionProps": true,
+    "@aws-cdk-lib/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true,
+    "@aws-cdk-lib/aws-apigateway:requestValidatorUniqueId": true,
+    "@aws-cdk-lib/aws-kms:aliasNameRef": true,
+    "@aws-cdk-lib/aws-autoscaling:generateLaunchTemplateInsteadOfLaunchConfig": true,
+    "@aws-cdk-lib/aws-iam:minimizePolicies": true,
+    "@aws-cdk-lib/aws-efs:denyAnonymousAccess": true
+  }
+}
